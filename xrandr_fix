@@ -1,16 +1,25 @@
 #!/bin/bash
-  ##Получение id
-  DEVICE_ID=$(lspci -v | grep "VGA compatible controller" -A 1 | grep"Device" | awk'{print $3}
-  FILE_ID=$(cat /etc/default/grub)
-  if[${DEVICE_ID}!=${FILE_ID}]
-    ##Вставка id
-    ##sudo sed -i "s/^GRUB_CMDLINE_LINUX=.*           -???
-    sudo sed -i '4iGRUB_CMDLINE_LINUX=.i915.force_probe={} i915.modeset=1'
-    ##/GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash pci=ids.
-    ##$device_id\"/" /etc/default/grub
-    ##Обновление конфигурации
-    grub2-mkconfig -o /boot/grub2/grub.cfg
-    ##Раскомментировать для отладки \/
-    ##sudo nano /etc/default/grub
-  else
+
+# Открываем терминал
+gnometerminal &
+sleep 2
+
+# Отключаем встроеный eDP-1
+xrandr --output eDP-1 --off
+
+# Получаем список всех подключенных мониторов
+connected_monitors="$(xrandr | grep -w 'connected' | awk '{print $1}')"
+primary_monitor=""
+
+# Проверяем каждый подключенный монитор
+for monitor in $connected_monitors; do
+    # Получаем информацию о мониторе
+    monitor_info="$(xrandr --query | grep -w $monitor)"
+    monitor_status="$(echo $monitor_info | awk '{print $2}')"
+    
+    # Если статус монитора "connected", делаем его главным
+    if [ "$monitor_status" = "connected" ]; then
+        xrandr --output $monitor --primary
+        primary_monitor="$monitor"
     fi
+done
